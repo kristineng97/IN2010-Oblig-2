@@ -31,6 +31,24 @@ class Actor:
         return f"{self.name}:{self.movies}"
 
 
+def shortest_path(E, nmid1, nmid2):
+    parents = {nmid1: none}
+    queue = deque([nmid1])
+    result = []
+
+    while queue:
+        v = deque.popleft(queue)
+        result.append(v)
+        for u in E[v]:
+            if u not in parents:
+                parents[u] = v
+                queue.append(u)
+    return parents
+
+
+
+
+
 def main():
     # Problem 1
     movie_lines = read_data("movies.tsv") # Read lines in movies.tsv to list movie_lines containing [tt_id, title, rating, num. of voices]
@@ -52,6 +70,7 @@ def main():
     #        break
     #    print(movie)
 
+
     # This gives us a nice way to access all the necessary adjacency relations
 
     # We want the actors to be the nodes in our graph, so numbers of nodes is the length of all_actors-dict
@@ -64,6 +83,14 @@ def main():
     print(f"Oppgave 1\n\nNodes: {len(all_actors)}\nEdges: {int(count_edges)}\n")
 
     # Problem 2
+    for movie in all_movies.values():
+        for actor in movie.actors:
+            movie.actors.remove(actor)
+            adj_l = [actress.nm_id for actress in movie.actors]
+            E = {actor.nm_id: adj_l}
+            movie.actors.append(actor)
+
+    print(E["nm0353790"])
 
 
 
