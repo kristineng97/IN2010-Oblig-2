@@ -31,19 +31,9 @@ class Actor:
         return f"{self.name}:{self.movies}"
 
 
-def shortest_path(E, nmid1, nmid2):
-    parents = {nmid1: none}
-    queue = deque([nmid1])
-    result = []
+def shortest_path(nmid1, nmid2):
 
-    while queue:
-        v = deque.popleft(queue)
-        result.append(v)
-        for u in E[v]:
-            if u not in parents:
-                parents[u] = v
-                queue.append(u)
-    return parents
+    return
 
 
 
