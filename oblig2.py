@@ -55,79 +55,115 @@ class Actor:
                 else:
                     self._neighbors[other_actor].add(movie)
 
+
 def breadth_first_search(from_actor, to_actor):
+    """BFS that starts at from_actor, and stops if to_actor is found.
+
+    Return:
+        Dictionary with actors as keys, parent actors as values.
+    """
     parents = {from_actor: None}
     queue = Queue()
     queue.put(from_actor)
-    result = []
 
     while queue:
         actor = queue.get()
-        result.append(actor)
-        for other_actor, common_movies in actor.neighbors.items():
-            if other_actor == to_actor:
-                parents[other_actor] = (actor, next(iter(common_movies)))
-                
-                return parents
-
-            elif other_actor not in parents:
-                parents[other_actor] = (actor, next(iter(common_movies)))
+        for other_actor in actor.neighbors:
+            if other_actor not in parents:
+                parents[other_actor] = actor
                 queue.put(other_actor)
+                
+                if other_actor == to_actor:
+                    return parents
 
     return parents
 
-def build_path_from_search_results(search_results, from_actor, to_actor):
-    """
+# def double_ended_breadth_first_search(from_actor, to_actor):
+#     """Searches for a path between two actors, by doing a BFS from both sides.
 
-    Return: List of two-tuples (actor, movie they shared with the actor in the next tuple)
+#     Return:
+#         List of two-tuples
+#             (actor, movie they shared with the actor in the next tuple)
+#         The list is empty if there is no path between them
+#     """
+
+#     parents = {"from": {from_actor: None}, "to": {to_actor: None}}
+#     finished = False
+#     this_queue = {"from": None, "to": None}
+#     next_queue = {"from": Queue(), "to": Queue()}
+#     next_queue["from"].put(from_actor)
+#     next_queue["to"].put(to_actor)
+
+#     while not finished:
+#         for source in ["from", "to"]:
+#             this_queue[source] = next_queue[source]
+#             next_queue[source] = Queue()
+
+#             actor = this_queue[source].get()
+#             for other_actor in actor.neighbors:
+#                 if other_actor not in parents[source]:
+#                     parents[source][other_actor] = actor
+#                     next_queue[source].put(other_actor)
+
+#                     if source == "to" and other_actor in parents["from"]:
+#                         middle_actor = other_actor
+#                         finished = True
+#                         break
+
+
+#     path = build_path(parents["from"], from_actor, middle_actor) \
+#          + build_path(parents["to"], middle_actor, to_actor)
+
+#     return path
+
+
+def build_path(search_results, from_actor, to_actor):
+    """Takes the result from breadth_first_search and makes a list of the path.
+
+    Return:
+        List of actors starting with from_actor and ending with to_actor
     """
     path = []
-    this = (to_actor, None)
-    while this is not None:
-        path.append(this)
-        this = search_results[this[0]]
+    this_actor = to_actor
+    while this_actor is not None:
+        path.append(this_actor)
+        this_actor = search_results[this_actor]
     
-    return path
-
-def find_shortest_path(from_actor, to_actor):
-    search_results = breadth_first_search(from_actor, to_actor)
-    path = build_path_from_search_results(search_results, from_actor, to_actor)
-
-    return path
+    return list(reversed(path))
 
 def main():
     # Problem 1
-    movie_lines = read_data("movies.tsv") # Read lines in movies.tsv to list movie_lines containing [tt_id, title, rating, num. of voices]
-    all_movies = {line[0]: Movie(*line[:-1]) for line in movie_lines} # Make a dictionary of all movies with keys tt_id and values is Movie-objects
 
-    actor_lines = read_data("actors.tsv") # Read lines in actors.tsv to list actor_lines containing [nm_id, name, tt_id1, tt_id2, ... etc]
-    all_actors = {line[0]: Actor(all_movies, *line) for line in actor_lines} # Make a dictionary of all actors with keys nm_id and values is Actor-objects
+    # Read lines in movies.tsv to list movie_lines containing
+    # [tt_id, title, rating, num. of voices]
+    movie_lines = read_data("movies.tsv")
+    # Make a dict of all movies with keys tt_id and values is Movie-objects
+    all_movies = {line[0]: Movie(*line[:-1]) for line in movie_lines}
 
-    # Loop through all Actor-objects, and for each movie the actor contributes in,
-    # first check that this movie is contained in movies.tsv,
-    # then go to this movie object and add given actor to actors-list
+    # Read lines in actors.tsv to list actor_lines containing 
+    # [nm_id, name, tt_id1, tt_id2, ... etc]
+    actor_lines = read_data("actors.tsv") 
+    # Make a dict of all actors with keys nm_id and values is Actor-objects
+    all_actors = {line[0]: Actor(all_movies, *line) for line in actor_lines} 
+
+    # Loop through all Actor-objects, and for each movie the actor contributes 
+    # in, go to this movie object and add given actor to actors-list
     for actor in all_actors.values():
         for movie in actor.movies:
             movie.add_actor(actor)
 
-    # Testing:
-    #for i,movie in enumerate(all_movies.values()):
-    #    if i > 3:
-    #        break
-    #    print(movie)
-
-
-    # This gives us a nice way to access all the necessary adjacency relations
-
-    # We want the actors to be the nodes in our graph, so numbers of nodes is the length of all_actors-dict
-    # Now we want to count the number of edges in the graph:
+    # We want the actors to be the nodes in our graph, so numbers of nodes is
+    # the length of all_actors-dict. The edges are the movies they play together
+    # in, so we count these by summing the number of edges in each movies fully
+    # connected graph of actors
     count_edges = 0
     for movie in all_movies.values():
         count_edges += len(movie.actors)*(len(movie.actors) - 1)/2
 
-    # This gives the result:
     print(f"Oppgave 1\n\nNodes: {len(all_actors)}\nEdges: {int(count_edges)}\n")
 
+    # We then want to verify that our graph works correctly by checking that it
+    # can find the shortest path between specific actors
     actor_pair_ids = [("nm2255973", "nm0000460")
                     , ("nm0424060", "nm0000243")
                     , ("nm4689420", "nm0000365")
@@ -137,12 +173,16 @@ def main():
         from_actor = all_actors[from_actor_id]
         to_actor = all_actors[to_actor_id]
 
-        path = find_shortest_path(from_actor, to_actor)
-        for actor, movie in reversed(path):
-            if movie is not None:
-                print(f"{actor.name}\n==[ {movie.title} ({movie.ranking}) ] ==> ", end="")
-            else:
-                print(actor.name, "\n")
+        search_results = breadth_first_search(from_actor, to_actor)
+        path = build_path(search_results, from_actor, to_actor)
+        # path = double_ended_breadth_first_search(from_actor, to_actor)
+
+        for actor, next_actor in zip(path[:-1], path[1:]):
+            movie = next(iter(actor.neighbors[next_actor]))
+            print(f"{actor.name}\n==[ {movie.title} ({movie.ranking}) ] ==> ",
+                  end="")
+        print(path[-1].name)
+        print()
 
 
 if __name__ == '__main__':
