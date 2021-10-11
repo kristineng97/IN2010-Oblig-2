@@ -1,4 +1,7 @@
 from queue import Queue
+from heapq import heappush, heappop
+import heapq
+from collections import defaultdict
 
 def read_data(filename="movies.tsv"):
     l = []
@@ -12,7 +15,7 @@ class Movie:
     def __init__(self, tt_id, title, ranking):
         self.tt_id = tt_id
         self.title = title
-        self.ranking = ranking
+        self.ranking = float(ranking)
         self.actors = []
 
     def add_actor(self, actor):
@@ -20,13 +23,20 @@ class Movie:
 
     def __str__(self):
         return f"{self.title}"
+    
+    def __lt__(self, other_movie):
+        return self.weight < other_movie.weight
 
+    @property
+    def weight(self):
+        return 10 - self.ranking
 
 class Actor:
     def __init__(self, all_movies, nm_id, name, *movies):
         self.nm_id = nm_id
         self.name = name
         self.movies = [all_movies[tt_id] for tt_id in movies if tt_id in all_movies]
+        self.best_movie_neighbors = {}
 
     @property
     def neighbors(self):
@@ -45,6 +55,10 @@ class Actor:
 
     def __hash__(self):
         return self.nm_id.__hash__()
+    
+    def __lt__(self, other_actor):
+        """Just for sorting in heap, where order really doesn't matter when they have the same cost"""
+        return True
 
     def build_adjacency(self):
         for movie in self.movies:
@@ -55,6 +69,21 @@ class Actor:
                 else:
                     self._neighbors[other_actor].add(movie)
 
+    def best_movie(self, other_actor):
+        if other_actor in self.best_movie_neighbors:
+            return self.best_movie_neighbors[other_actor]
+        else:
+            prevcount = 10
+            count = 10
+            if other_actor in self.neighbors:
+                for movie in self.neighbors[other_actor]:
+                    count = min(movie.weight, count)
+                    if count < prevcount:
+                        self.best_movie_neighbors[other_actor] = movie
+                    prevcount = count
+            else:
+                raise AssertionError (f'Not neighbors {self.name} and {other_actor.name} are not neighbors')       
+            return self.best_movie_neighbors[other_actor]
 
 def breadth_first_search(from_actor, to_actor):
     """BFS that starts at from_actor, and stops if to_actor is found.
@@ -131,6 +160,31 @@ def build_path(search_results, from_actor, to_actor):
     
     return list(reversed(path))
 
+
+def dijkstra(from_actor, to_actor):
+    """
+    Function returning the shortest path for a
+    weighted graph, using Dijkstra's algorithm.
+    """
+    heap = [(0, from_actor)]
+    best_path = {from_actor: []}
+    best_path_cost = defaultdict(lambda: float('inf'))
+    best_path_cost[from_actor] = 0
+
+    while heap:
+        cost, actor = heappop(heap)
+        if cost >= best_path_cost[to_actor]:
+            break
+        for other_actor in actor.neighbors:
+            total_cost = cost + actor.best_movie(other_actor).weight
+            if total_cost < best_path_cost[other_actor]:
+                best_path_cost[other_actor] = total_cost
+                heappush(heap, (total_cost, other_actor))
+                best_path[other_actor] = best_path[actor] + [actor]
+
+    return best_path[to_actor] + [to_actor], best_path_cost[to_actor]
+
+
 def main():
     # Problem 1
 
@@ -183,6 +237,21 @@ def main():
                   end="")
         print(path[-1].name)
         print()
+
+    #Problem 3
+    for from_actor_id, to_actor_id in actor_pair_ids:
+        from_actor = all_actors[from_actor_id]
+        to_actor = all_actors[to_actor_id]
+
+        path = dijkstra(from_actor, to_actor)[0]
+
+        for actor, next_actor in zip(path[:-1], path[1:]):
+            movie = actor.best_movie(next_actor)
+            print(f"{actor.name}\n==[ {movie.title} ({movie.ranking}) ] ==> ",
+                end="")
+        print(path[-1].name)
+        print()
+
 
 
 if __name__ == '__main__':
