@@ -23,7 +23,7 @@ class Movie:
 
     def __str__(self):
         return f"{self.title}"
-    
+
     def __lt__(self, other_movie):
         return self.weight < other_movie.weight
 
@@ -55,7 +55,7 @@ class Actor:
 
     def __hash__(self):
         return self.nm_id.__hash__()
-    
+
     def __lt__(self, other_actor):
         """Just for sorting in heap, where order really doesn't matter when they have the same cost"""
         return True
@@ -82,7 +82,7 @@ class Actor:
                         self.best_movie_neighbors[other_actor] = movie
                     prevcount = count
             else:
-                raise AssertionError (f'Not neighbors {self.name} and {other_actor.name} are not neighbors')       
+                raise AssertionError (f'Not neighbors {self.name} and {other_actor.name} are not neighbors')
             return self.best_movie_neighbors[other_actor]
 
 def breadth_first_search(from_actor, to_actor):
@@ -101,7 +101,7 @@ def breadth_first_search(from_actor, to_actor):
             if other_actor not in parents:
                 parents[other_actor] = actor
                 queue.put(other_actor)
-                
+
                 if other_actor == to_actor:
                     return parents
 
@@ -157,7 +157,7 @@ def build_path(search_results, from_actor, to_actor):
     while this_actor is not None:
         path.append(this_actor)
         this_actor = search_results[this_actor]
-    
+
     return list(reversed(path))
 
 
@@ -194,13 +194,13 @@ def main():
     # Make a dict of all movies with keys tt_id and values is Movie-objects
     all_movies = {line[0]: Movie(*line[:-1]) for line in movie_lines}
 
-    # Read lines in actors.tsv to list actor_lines containing 
+    # Read lines in actors.tsv to list actor_lines containing
     # [nm_id, name, tt_id1, tt_id2, ... etc]
-    actor_lines = read_data("actors.tsv") 
+    actor_lines = read_data("actors.tsv")
     # Make a dict of all actors with keys nm_id and values is Actor-objects
-    all_actors = {line[0]: Actor(all_movies, *line) for line in actor_lines} 
+    all_actors = {line[0]: Actor(all_movies, *line) for line in actor_lines}
 
-    # Loop through all Actor-objects, and for each movie the actor contributes 
+    # Loop through all Actor-objects, and for each movie the actor contributes
     # in, go to this movie object and add given actor to actors-list
     for actor in all_actors.values():
         for movie in actor.movies:
@@ -216,8 +216,10 @@ def main():
 
     print(f"Oppgave 1\n\nNodes: {len(all_actors)}\nEdges: {int(count_edges)}\n")
 
+    # Problem 2
     # We then want to verify that our graph works correctly by checking that it
     # can find the shortest path between specific actors
+    print("Oppgave 2\n")
     actor_pair_ids = [("nm2255973", "nm0000460")
                     , ("nm0424060", "nm0000243")
                     , ("nm4689420", "nm0000365")
@@ -239,18 +241,20 @@ def main():
         print()
 
     #Problem 3
+    print("\nOppgave 3\n")
     for from_actor_id, to_actor_id in actor_pair_ids:
         from_actor = all_actors[from_actor_id]
         to_actor = all_actors[to_actor_id]
 
         path = dijkstra(from_actor, to_actor)[0]
+        total_weight = dijkstra(from_actor, to_actor)[1]
 
         for actor, next_actor in zip(path[:-1], path[1:]):
             movie = actor.best_movie(next_actor)
             print(f"{actor.name}\n==[ {movie.title} ({movie.ranking}) ] ==> ",
                 end="")
         print(path[-1].name)
-        print()
+        print(f"Total weight: {total_weight:.1f}\n")
 
 
 
