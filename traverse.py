@@ -24,43 +24,44 @@ def breadth_first_search(from_actor, to_actor):
 
     return parents
 
-# def double_ended_breadth_first_search(from_actor, to_actor):
-#     """Searches for a path between two actors, by doing a BFS from both sides.
+def double_ended_breadth_first_search(from_actor, to_actor):
+    """Searches for a path between two actors, by doing a BFS from both sides.
 
-#     Return:
-#         List of two-tuples
-#             (actor, movie they shared with the actor in the next tuple)
-#         The list is empty if there is no path between them
-#     """
+    Return:
+        List of two-tuples
+            (actor, movie they shared with the actor in the next tuple)
+        The list is empty if there is no path between them
+    """
 
-#     parents = {"from": {from_actor: None}, "to": {to_actor: None}}
-#     finished = False
-#     this_queue = {"from": None, "to": None}
-#     next_queue = {"from": Queue(), "to": Queue()}
-#     next_queue["from"].put(from_actor)
-#     next_queue["to"].put(to_actor)
+    parents = {"from": {from_actor: None}, "to": {to_actor: None}}
+    finished = False
+    this_queue = {"from": None, "to": None}
+    next_queue = {"from": Queue(), "to": Queue()}
+    next_queue["from"].put(from_actor)
+    next_queue["to"].put(to_actor)
 
-#     while not finished:
-#         for source in ["from", "to"]:
-#             this_queue[source] = next_queue[source]
-#             next_queue[source] = Queue()
+    while not finished:
+        for source in ["from", "to"]:
+            this_queue[source] = next_queue[source]
+            next_queue[source] = Queue()
 
-#             actor = this_queue[source].get()
-#             for other_actor in actor.neighbors:
-#                 if other_actor not in parents[source]:
-#                     parents[source][other_actor] = actor
-#                     next_queue[source].put(other_actor)
+            while this_queue[source].qsize():
+                actor = this_queue[source].get()
+                for other_actor in actor.neighbors:
+                    if other_actor not in parents[source]:
+                        parents[source][other_actor] = actor
+                        next_queue[source].put(other_actor)
 
-#                     if source == "to" and other_actor in parents["from"]:
-#                         middle_actor = other_actor
-#                         finished = True
-#                         break
+                        if source == "to" and other_actor in parents["from"]:
+                            middle_actor = other_actor
 
 
-#     path = build_path(parents["from"], from_actor, middle_actor) \
-#          + build_path(parents["to"], middle_actor, to_actor)
+                            path = build_path(parents["from"], from_actor, middle_actor) \
+                                 + list(reversed(build_path(parents["to"], to_actor, middle_actor)))[1:]
 
-#     return path
+                            return path
+
+    return path
 
 
 def build_path(search_results, from_actor, to_actor):

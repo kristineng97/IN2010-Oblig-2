@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from actor import Actor
 from movie import Movie
-from traverse import dijkstra, breadth_first_search, build_path
+from traverse import dijkstra, breadth_first_search, build_path, double_ended_breadth_first_search
 from components import find_all_components
 
 def read_data(filename="movies.tsv"):
@@ -13,7 +13,6 @@ def read_data(filename="movies.tsv"):
         for line in infile:
             l.append(line.strip().split("\t"))
     return l
-
 
 def main():
     # Problem 1
@@ -71,7 +70,6 @@ def main():
         print()
 
     # Problem 3
-
     print("\nOppgave 3\n")
     for from_actor_id, to_actor_id in actor_pair_ids:
         from_actor = all_actors[from_actor_id]
