@@ -52,7 +52,8 @@ def double_ended_breadth_first_search(from_actor, to_actor):
                         parents[source][other_actor] = actor
                         next_queue[source].put(other_actor)
 
-                        if source == "to" and other_actor in parents["from"]:
+                        if source == "to" and other_actor in parents["from"] \
+                         or source == "from" and other_actor in parents["to"]:
                             middle_actor = other_actor
 
 

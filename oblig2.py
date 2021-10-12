@@ -58,9 +58,9 @@ def main():
         from_actor = all_actors[from_actor_id]
         to_actor = all_actors[to_actor_id]
 
-        search_results = breadth_first_search(from_actor, to_actor)
-        path = build_path(search_results, from_actor, to_actor)
-        # path = double_ended_breadth_first_search(from_actor, to_actor)
+        # search_results = breadth_first_search(from_actor, to_actor)
+        # path = build_path(search_results, from_actor, to_actor)
+        path = double_ended_breadth_first_search(from_actor, to_actor)
 
         for actor, next_actor in zip(path[:-1], path[1:]):
             movie = next(iter(actor.neighbors[next_actor]))
