@@ -95,7 +95,7 @@ def breadth_first_search(from_actor, to_actor):
     queue = Queue()
     queue.put(from_actor)
 
-    while queue:
+    while queue.qsize():
         actor = queue.get()
         for other_actor in actor.neighbors:
             if other_actor not in parents:
@@ -184,21 +184,33 @@ def dijkstra(from_actor, to_actor):
 
     return best_path[to_actor] + [to_actor], best_path_cost[to_actor]
 
-def find_components(from_actor):
-    count_comp = 0
-    visited = set()
+def find_components(from_actor, not_visited):
+    count_comp = 1
     queue = Queue()
     queue.put(from_actor)
+    not_visited.remove(from_actor)
 
-    while queue:
+    while queue.qsize():
         actor = queue.get()
         for other_actor in actor.neighbors:
-            if other_actor not in visited:
-                visited.add(other_actor)
+            if other_actor in not_visited:
+                not_visited.remove(other_actor)
                 queue.put(other_actor)
                 count_comp += 1
-    
+
     return count_comp
+
+def find_all_components(all_actors):
+    not_visited = set(all_actors.copy().values())
+    all_components = defaultdict(lambda: 0)
+    while not_visited:
+        actor = next(iter(not_visited))
+        count_comp = find_components(actor, not_visited)
+        all_components[count_comp] += 1
+
+    return all_components
+
+
 
 
 def main():
@@ -257,7 +269,7 @@ def main():
         print()
 
     # Problem 3
-    ''''
+
     print("\nOppgave 3\n")
     for from_actor_id, to_actor_id in actor_pair_ids:
         from_actor = all_actors[from_actor_id]
@@ -272,12 +284,16 @@ def main():
                 end="")
         print(path[-1].name)
         print(f"Total weight: {total_weight:.1f}\n")
-    '''
+    
 
     # Problem 4
     print("\nOppgave 4\n")
     from_actor = all_actors["nm0031483"]
-    find_components(from_actor)
+    all_components = find_all_components(all_actors)
+
+    for key, value in reversed(sorted(dict(all_components).items())):
+        print(f"There are {value} components of size {key}")
+
 
 if __name__ == '__main__':
     main()
