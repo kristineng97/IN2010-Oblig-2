@@ -197,8 +197,7 @@ def find_components(from_actor):
                 visited.add(other_actor)
                 queue.put(other_actor)
                 count_comp += 1
-                #if other_actor.neighbors == actor:
-
+    
     return count_comp
 
 
