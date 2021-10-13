@@ -6,7 +6,7 @@ def breadth_first_search(from_actor, to_actor):
     """BFS that starts at from_actor, and stops if to_actor is found.
 
     Return:
-        Dictionary with actors as keys, parent actors as values.
+        List of actors starting with from_actor and ending with to_actor
     """
     parents = {from_actor: None}
     queue = Queue()
@@ -22,26 +22,27 @@ def breadth_first_search(from_actor, to_actor):
                 if other_actor == to_actor:
                     return parents
 
-    return parents
+    return build_path(parents, from_actor, to_actor)
 
 def double_ended_breadth_first_search(from_actor, to_actor):
     """Searches for a path between two actors, by doing a BFS from both sides.
 
-    Return:
-        List of two-tuples
-            (actor, movie they shared with the actor in the next tuple)
-        The list is empty if there is no path between them
-    """
+    Loops around the from_actor and to_actor interchangingly until a middle 
+    actor, some actor that can be reached from both initial actors is found. To
+    do this we have to keep track of some extra queues, and it gets a bit more
+    complicated, but works quite a lot faster than the single ended approach.
 
+    Return:
+        List of actors starting with from_actor and ending with to_actor
+    """
     parents = {"from": {from_actor: None}, "to": {to_actor: None}}
-    finished = False
     this_queue = {"from": None, "to": None}
     next_queue = {"from": Queue(), "to": Queue()}
     next_queue["from"].put(from_actor)
     next_queue["to"].put(to_actor)
 
-    while not finished:
-        for source in ["from", "to"]:
+    while next_queue["from"].qsize() or next_queue["to"].qsize():
+        for source, other_source in zip(["from", "to"], ["to", "from"]):
             this_queue[source] = next_queue[source]
             next_queue[source] = Queue()
 
@@ -52,17 +53,12 @@ def double_ended_breadth_first_search(from_actor, to_actor):
                         parents[source][other_actor] = actor
                         next_queue[source].put(other_actor)
 
-                        if source == "to" and other_actor in parents["from"] \
-                         or source == "from" and other_actor in parents["to"]:
-                            middle_actor = other_actor
-
-
-                            path = build_path(parents["from"], from_actor, middle_actor) \
-                                 + list(reversed(build_path(parents["to"], to_actor, middle_actor)))[1:]
-
-                            return path
-
-    return path
+                        if other_actor in parents[other_source]:
+                            from_path = build_path(parents["from"], from_actor,
+                                                   other_actor)
+                            to_path = build_path(parents["to"], to_actor,
+                                                 other_actor)
+                            return from_path + list(reversed(to_path))[1:]
 
 
 def build_path(search_results, from_actor, to_actor):
@@ -81,9 +77,15 @@ def build_path(search_results, from_actor, to_actor):
 
 
 def dijkstra(from_actor, to_actor):
-    """
-    Function returning the shortest path for a
-    weighted graph, using Dijkstra's algorithm.
+    """Finds shortest path for a weighted graph, using Dijkstra's algorithm.
+
+    Stops when the currently found path to the to_actor is the path with the
+    lowest cost.
+
+    Return:
+        Two-tuple with:
+            List of actors starting with from_actor and ending with to_actor
+            The associated cost of the path
     """
     heap = [(0, from_actor)]
     best_path = {from_actor: []}
@@ -92,8 +94,10 @@ def dijkstra(from_actor, to_actor):
 
     while heap:
         cost, actor = heappop(heap)
+        
         if cost >= best_path_cost[to_actor]:
             break
+        
         for other_actor in actor.neighbors:
             total_cost = cost + actor.best_movie(other_actor).weight
             if total_cost < best_path_cost[other_actor]:
