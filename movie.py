@@ -11,9 +11,6 @@ class Movie:
     def __str__(self):
         return f"{self.title}"
 
-    def __lt__(self, other_movie):
-        return self.weight < other_movie.weight
-
     @property
     def weight(self):
         return 10 - self.ranking
