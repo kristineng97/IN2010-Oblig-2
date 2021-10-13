@@ -2,7 +2,11 @@ from queue import Queue
 from collections import defaultdict
 
 def find_components(actor, not_visited):
-    """Count the number of nodes in the same component as actor"""
+    """Count the number of nodes in the same component as actor
+    
+    As a side effect, all actors in the same node as actor is removed from
+    `not_visited`.
+    """
     count_comp = 1
     queue = Queue()
     queue.put(actor)
