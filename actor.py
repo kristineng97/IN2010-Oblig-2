@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 class Actor:
     def __init__(self, all_movies, nm_id, name, *movies):
         self.nm_id = nm_id
@@ -7,12 +9,17 @@ class Actor:
 
     @property
     def neighbors(self):
-        """Returns adjacency information, possibly after computing it"""
+        """Returns adjacency information, possibly after computing it
+
+        `neighbors` is on the form
+            {other_actor: [movies, they, have, played, together, in]}
+        """
         if "_neighbors" in self.__dict__:
             return self._neighbors
         else:
-            self._neighbors = {}
+            self._neighbors = defaultdict(lambda: set())
             self._build_adjacency()
+            self._neighbors = dict(self._neighbors)
             return self._neighbors
 
     def __str__(self):
@@ -34,13 +41,14 @@ class Actor:
         return True
 
     def _build_adjacency(self):
+        """Finds neighbors of self by going through movies self has played in.
+
+        The `Movie` objects stores a list of all actors playing in that movie.
+        """
         for movie in self.movies:
-            other_actors = (o_actor for o_actor in movie.actors if o_actor != self)
+            other_actors = (actor for actor in movie.actors if actor != self)
             for other_actor in other_actors:
-                if other_actor not in self._neighbors:
-                    self._neighbors[other_actor] = {movie}
-                else:
-                    self._neighbors[other_actor].add(movie)
+                self._neighbors[other_actor].add(movie)
 
     def best_movie(self, other_actor):
         """Finds the best movie self and other_actor both star in"""
